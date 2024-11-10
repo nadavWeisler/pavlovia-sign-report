@@ -1,32 +1,38 @@
+"""
+This script reads a CSV file containing
+data and creates a Word document for each row in the CSV file.
+"""
+import base64
+import os
+from collections import namedtuple
+from io import BytesIO
 import pandas as pd
+from tqdm import tqdm
 from docx import Document
 from docx.shared import Inches
-import base64
-from io import BytesIO
 from PIL import Image
-import os
-import tqdm
 
 # Define a class to represent a column in the data
-class Column:
-    def __init__(self, name, display_name, column_type):
-        self.name = name
-        self.display_name = display_name
-        self.column_type = column_type
+
+Column = namedtuple("Column", ["name", "display_name", "column_type"])
 
 class ColumnType:
+    """
+    An enumeration of column types.
+    """
     STRING = "string"
     IMAGE = "image"
 
 # Define the column that contains the unique identifier for each document
-ID_COL = "תעודת זהות"
+ID_COL = "num"
 
+# Define the columns in the data
 COLUMNS = [
-    Column("שם", "שם", "string"),
-    Column("תעודת זהות", "תעודת זהות", "string"),
-    Column("סכום", "סכום", "string"),
-    Column("responseDate", "תאריך", "string"),
-    Column("חתימה", "חתימה", "image")
+    Column("block/payment_phone.text1", "שם", "string"),
+    # Column("תעודת זהות", "תעודת זהות", "string"),
+    # Column("סכום", "סכום", "string"),
+    # Column("responseDate", "תאריך", "string"),
+    Column("sign", "חתימה", "image")
 ]
 
 TITLE = "חתימת נבדק" # Title of the document
@@ -44,6 +50,12 @@ if not os.path.exists(RESULTS_FOLDER):
 
 # Function to create a document for a row in the data frame and save it 
 def create_doc(row, folder_path):
+    """
+    Create a Word document for a row in the data frame and save it to the specified folder.
+    Args:
+        row (pd.Series): The row in the data frame.
+        folder_path (str): The path to the folder where the document will be saved.
+    """
     # Create a new document
     doc = Document()
 
@@ -77,12 +89,14 @@ def create_doc(row, folder_path):
     doc.save(f"{folder_path}/{row[ID_COL]}.docx")
 
 if __name__ == "__main__":
-    # Load the data from the CSV file into a pandas DataFrame 
-    df = pd.read_csv('recieps_28_7.csv')  # Load the data
+    FILE_NAME = './payment.csv'  # The name of the CSV file
 
-    # Iterate over the rows in the DataFrame and create a document for each row 
-    for index, r in tqdm.tqdm(df.iterrows(), total=df.shape[0]):
-        create_doc(r, RESULTS_FOLDER + "/recieps_28_7")
+    # Load the data from the CSV file into a pandas DataFrame
+    df = pd.read_csv(FILE_NAME)  # Load the data
+
+    # Iterate over the rows in the DataFrame and create a document for each row
+    for index, r in tqdm(df.iterrows(), total=df.shape[0]):
+        create_doc(r, RESULTS_FOLDER)
 
     # Open the results folder in the file explorer
     os.startfile(RESULTS_FOLDER)
